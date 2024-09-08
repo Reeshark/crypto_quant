@@ -5,3 +5,5 @@ poetry.lock
 **/*.pyc
 **/prof
 .idea
+output/
+data/
