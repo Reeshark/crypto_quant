@@ -226,6 +226,7 @@ if __name__ == '__main__':
     transaction_fee=0.00045
     df1 = pd.read_csv(f"C:\\Trade\\data\\{symbols[0]}_{internal}_spot.csv")
     df2 = pd.read_csv(f"C:\\Trade\\data\\{symbols[1]}_{internal}_spot.csv")
+    df_base=pd.read_csv(f"C:\\Trade\\data\\{'BTCUSDT'}_{internal}_spot.csv")
     df1 = df1[-num_candles:]  # extract the latest n candles
     df2 = df2[-num_candles:]  # extract the latest n candles
     df1,df2=get_overlapping(df1,df2)

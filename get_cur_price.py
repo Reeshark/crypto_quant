@@ -505,7 +505,7 @@ if __name__ == "__main__":
              "IDUSDT",
              "PORTALUSDT",
             "ICPUSDT"]
-    symbols = ['BTCUSDT']
+    symbols = ['BTCUSDT','1000SHIBUSDT','RVNUSDT']
     #symbols = ['ETHUSDT']
     #pool = multiprocessing.Pool(processes=5)
     print(symbols)
@@ -513,7 +513,7 @@ if __name__ == "__main__":
     start_index = 0
     for idx in range(start_index, len(symbols)):
         symbol = symbols[idx]
-        for internal in ['1d']:
+        for internal in ['15m']:
         # try:
         #     pool.apply_async(generate_spot_trading_data, args=(symbol, "1w"))
         #     # generate_spot_trading_data(symbol= symbol, interval= "1h")
@@ -521,8 +521,8 @@ if __name__ == "__main__":
         #     print(f"error {symbol} spot")
             try:
                 #pool.apply_async(generate_contract_trading_data, args=(symbol, internal))
-                #generate_contract_trading_data(symbol, internal)
-                generate_spot_trading_data(symbol= symbol, interval= internal)
+                generate_contract_trading_data(symbol, internal)
+                #generate_spot_trading_data(symbol= symbol, interval= internal)
             except:
                 print(f"error {symbol} spot")
             # try:
