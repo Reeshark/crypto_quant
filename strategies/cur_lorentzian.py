@@ -1,3 +1,6 @@
+import sys
+sys.path.append('./')
+sys.path.append('./strategies/')
 import os
 import numpy as np
 from coin_list import coin_whole_list
@@ -7,6 +10,8 @@ from datetime import datetime, timezone, timedelta
 import requests
 from get_factors import *
 import multiprocessing
+from termcolor import colored
+
 
 def get_cur_price(symbol,interval,end_time,max_candles):
     columns = ["open_time", "open_price", "high_price", "low_price", "close_price",
@@ -40,6 +45,16 @@ def get_cur_price(symbol,interval,end_time,max_candles):
     df['close_time'] = pd.to_datetime(df['close_time'], origin="1970-01-01 08:00:00", unit='ms')
     return df
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 def get_signals(symbol,interval,max_candles):
     global print_list
     print(symbol)
@@ -55,11 +70,14 @@ def get_signals(symbol,interval,max_candles):
         if last_short_index>last_long_index:
             print_str = ("Symbol:%s, now:%s last_short:%s" %
                          (symbol, str(cur_ts)[:19], str(df['close_time'].to_list()[last_short_index])[:19]))
+            #print(colored(print_str, 'red'))
+            print(f"{bcolors.FAIL}%s{bcolors.ENDC}" % print_str) # print with red
         else:
             print_str = ("Symbol:%s, now:%s last_long:%s" %
                          (symbol, str(cur_ts)[:19],  str(df['close_time'].to_list()[last_long_index])[:19]))
 
-        print(print_str)
+            #print(colored(print_str,'green'))
+            print(f"{bcolors.OKGREEN}%s{bcolors.ENDC}" % print_str) # print with green
         print_list.append(print_str)
 
 if __name__ == '__main__':
@@ -92,5 +110,10 @@ if __name__ == '__main__':
         tries+=1
         if tries>20: #超过20次尝试如果还没跑出来就不要了
             break
-    for print_str in print_list:
-        print(print_str)
+    for idx,print_str in enumerate(print_list):
+        if "long" in print_str:
+            #print(colored("%d. %s"%(idx+1,print_str),'green'))
+            print(f"%d. {bcolors.OKGREEN}%s{bcolors.ENDC}" % (idx+1, print_str)) # print with green
+        else:
+            #print(colored("%d. %s"%(idx+1,print_str),'red'))
+            print(f"%d. {bcolors.FAIL}%s{bcolors.ENDC}" % (idx + 1, print_str)) # print with red
