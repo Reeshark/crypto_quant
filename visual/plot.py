@@ -637,3 +637,56 @@ def plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=''):
     else:
         plt.show()
     return
+
+def plot_wave(df,symbol,interval,dump_file=''):
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(36, 18))
+
+    # 上部子图：绘制收盘价曲线
+    ax1.set_title('%s---%s %s-%s Close Price'%(symbol,interval,str(df['open_time'].tolist()[0]),str(df['close_time'].tolist()[-1])))
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Price')
+    ax2.set_title('Wave Factor')
+    ax2.set_xlabel('Time')
+    ax2.set_ylabel('Wave Value')
+    ax3.set_title('MACD')
+    ax3.set_xlabel('Time')
+    ax3.set_ylabel('MACD Value')
+    # 初始化颜色数组
+    colors = ['' for _ in df.index]
+    wave_colors=['' for _ in df.index]
+    macd_colors = ['' for _ in df.index]
+    # 根据o和s的大小关系设置颜色
+    for i in range(len(df)):
+        if df['wave_o'].iloc[i] > df['wave_s'].iloc[i]: # o>s ?
+            wave_colors[i]='green'
+        else:
+            wave_colors[i]='red'
+        if df['MACD_Histogram'].iloc[i]>0:
+            macd_colors[i]='green'
+        else:
+            macd_colors[i]='red'
+        colors[i] = 'blue'
+    df['colors']=colors
+
+    # 绘制收盘价曲线，根据颜色数组绘制
+    for i in range(20, len(colors)):
+        ax1.plot(df.index[i:i+2], df['close_price'].iloc[i:i+2], color=colors[i])
+        ax2.plot(df.index[i:i + 2], df['wave_o'].iloc[i:i + 2], color=wave_colors[i])
+        ax2.plot(df.index[i:i + 2], df['wave_s'].iloc[i:i + 2], color=wave_colors[i])
+        ax3.bar(df.index[i:i + 2], df['MACD_Histogram'].iloc[i:i + 2], color=macd_colors[i])
+
+    ax2.axhline(y=100, linestyle=':', color='red')
+    ax2.axhline(y=0, linestyle=':', color='blue')
+    ax2.axhline(y=-100, linestyle=':', color='green')
+    # 设置网格线
+    ax1.grid(True)
+    ax2.grid(True)
+    ax3.grid(True)
+
+    # 显示图表
+    plt.tight_layout()
+    if not dump_file=='' and 'pdf' in dump_file:
+        plt.savefig(dump_file, format='pdf', dpi=400)
+    else:
+        plt.show()
+    return

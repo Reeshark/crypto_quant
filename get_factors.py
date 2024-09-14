@@ -8,6 +8,7 @@ from advanced_ta.LorentzianClassification.Types import Feature, Settings
 from visual.plot import plot_price_with_adx
 from ta.trend import cci as CCI, adx as ADX, ema_indicator as EMA, sma_indicator as SMA
 from sklearn.preprocessing import MinMaxScaler
+from ta.trend import ema_indicator, sma_indicator
 # 计算ADX指标的函数
 def calculate_ADX(df, len_period=14, th_period=20):
     high = df['high_price']
@@ -162,6 +163,35 @@ def calculate_lorentzian(df):
 
 
 
+def src(df, src_type):
+    if src_type == 'open':
+        x = df['open_price']
+    elif src_type == 'high':
+        x = df['high_price']
+    elif src_type == 'low':
+        x = df['low_price']
+    elif src_type == 'close':
+        x = df['close_price']
+    elif src_type == 'oc2':
+        x = (df['open_price'] + df['close_price']) / 2
+    elif src_type == 'hl2':
+        x = (df['high_price'] + df['low_price']) / 2
+    elif src_type == 'hlc3':
+        x = (df['high_price'] + df['low_price'] + df['close_price']) / 3
+    elif src_type == 'ohlc4':
+        x = (df['open_price'] + df['high_price'] + df['low_price'] + df['close_price']) / 4
+    elif src_type == 'hlcc4':
+        x = (df['high_price'] + df['low_price'] + df['close_price'] * 2) / 4
+    return x
+
+def calculate_wave(df, src_type, clen, alen, slen):
+    x = src(df, src_type)
+    m = ema_indicator(x, window=clen)
+    d = pd.Series(x).rolling(window=clen).std()
+    o = ema_indicator((x - m) / d * 100, window=alen)
+    s = sma_indicator(o, window=slen)
+    df['wave_o'],df['wave_s'],df['wave_h']=o,s,o-s
+    return df
 
 if __name__ == '__main__':
     symbols=['BTCUSDT']
