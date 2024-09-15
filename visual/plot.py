@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 def plot_price_with_adx(df,symbol,internal, ADX_thr=20,RSI_thr=[30,70]):
     # 创建一个画布和两个子图
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(15, 12))
@@ -566,7 +567,6 @@ def plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=''):
         return color
 
     fig, (ax1, ax2,ax3,ax4,ax5) = plt.subplots(5, 1, figsize=(20, 20))  # width,height
-    import pandas as pd
     spread=df_pair['spread']
     sma=df_pair['sma']
     bollinger_upper=df_pair['bollinger_upper']
@@ -639,7 +639,7 @@ def plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=''):
     return
 
 def plot_wave(df,symbol,interval,dump_file=''):
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(36, 18))
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(36, 18))
 
     # 上部子图：绘制收盘价曲线
     ax1.set_title('%s---%s %s-%s Close Price'%(symbol,interval,str(df['open_time'].tolist()[0]),str(df['close_time'].tolist()[-1])))
@@ -651,9 +651,11 @@ def plot_wave(df,symbol,interval,dump_file=''):
     ax3.set_title('MACD')
     ax3.set_xlabel('Time')
     ax3.set_ylabel('MACD Value')
+
     # 初始化颜色数组
     colors = ['' for _ in df.index]
     wave_colors=['' for _ in df.index]
+    wave_1d_colors = ['' for _ in df.index]
     macd_colors = ['' for _ in df.index]
     # 根据o和s的大小关系设置颜色
     for i in range(len(df)):
@@ -661,11 +663,20 @@ def plot_wave(df,symbol,interval,dump_file=''):
             wave_colors[i]='green'
         else:
             wave_colors[i]='red'
+        if df['wave_1d_h'].iloc[i]> 0: # o>s ?
+            wave_1d_colors[i]='green'
+        else:
+            wave_1d_colors[i]='red'
         if df['MACD_Histogram'].iloc[i]>0:
             macd_colors[i]='green'
         else:
             macd_colors[i]='red'
-        colors[i] = 'blue'
+        if df['strategy_signal'].iloc[i]==1:
+            colors[i] = 'green'
+        elif df['strategy_signal'].iloc[i]==-1:
+            colors[i] = 'red'
+        else:
+            colors[i]='blue'
     df['colors']=colors
 
     # 绘制收盘价曲线，根据颜色数组绘制
@@ -673,16 +684,31 @@ def plot_wave(df,symbol,interval,dump_file=''):
         ax1.plot(df.index[i:i+2], df['close_price'].iloc[i:i+2], color=colors[i])
         ax2.plot(df.index[i:i + 2], df['wave_o'].iloc[i:i + 2], color=wave_colors[i])
         ax2.plot(df.index[i:i + 2], df['wave_s'].iloc[i:i + 2], color=wave_colors[i])
-        ax3.bar(df.index[i:i + 2], df['MACD_Histogram'].iloc[i:i + 2], color=macd_colors[i])
+        ax3.plot(df.index[i:i + 2], df['wave_1d_h'].iloc[i:i + 2], color=wave_1d_colors[i])
+        #ax3.bar(df.index[i:i + 2], df['MACD_Histogram'].iloc[i:i + 2], color=macd_colors[i])
 
     ax2.axhline(y=100, linestyle=':', color='red')
     ax2.axhline(y=0, linestyle=':', color='blue')
     ax2.axhline(y=-100, linestyle=':', color='green')
+    balance=df['balance']
+    min_balance = min(balance)
+    # 计算年化收益
+    time_diff=pd.to_timedelta(df['close_time'].values[-1] - df['open_time'].values[0], unit='s')
+    profit=(balance.iloc[-1]-balance.iloc[0])/balance.iloc[0]
+    annual_profit=profit/time_diff.total_seconds()*(86400*365)*100
+    ax4.set_title('Final Balance:%.3f, Min Balance:%.3f, Annual_profit:%.3f%%'%(balance.iloc[-1],min_balance,annual_profit))
+    ax4.set_xlabel('Time')
+    ax4.set_ylabel('Balance')
+    ax4.plot(range(len(balance)), balance, color='black')
     # 设置网格线
     ax1.grid(True)
     ax2.grid(True)
     ax3.grid(True)
+    ax4.grid(True)
 
+    xs_long, ys_long, xs_short, ys_short=get_lorentzian_points(df)
+    ax1.plot(xs_long,ys_long,'o',color='green')
+    ax1.plot(xs_short, ys_short, 'o', color='red')
     # 显示图表
     plt.tight_layout()
     if not dump_file=='' and 'pdf' in dump_file:
