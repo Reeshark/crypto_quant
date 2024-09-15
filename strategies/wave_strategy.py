@@ -345,7 +345,7 @@ def calculate_profit(df,balance=10000.0,transaction_fee=0.00045):
     return df
 
 if __name__ == '__main__':
-    symbol='BNBUSDT'
+    symbol='ILVUSDT'
     interval='4h'
     num_candles=5000
     df = pd.read_csv(f"C:\\Trade\\data\\{symbol}_{interval}_spot.csv")
