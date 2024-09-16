@@ -133,19 +133,19 @@ def wave_strategy(df):
 
 # 1.观望时：可以开多或开空
 
-# 1.1开多条件：大周期(1d)多 && ((lor信号多) || (prediction>=4) && 波浪趋势蓝色)
-# 1.2开空条件：大周期(1d)空 && ((lor信号空) || (prediction<=-4) && 波浪趋势粉色)
+# 1.1开多条件：大周期(1d)多 && ((lor信号多) || (prediction>=6) && 波浪趋势蓝色)
+# 1.2开空条件：大周期(1d)空 && ((lor信号空) || (prediction<=-6) && 波浪趋势粉色)
 
 # 2.开多时：可以临时退场避险或返场
 #
-# 2.1 临时退场：lor信号空 || ((prediction<0) && 波浪趋势粉色 && 波浪趋势>0)
-# 2.2 退场后返场：((prediction>2) && 波浪趋势预判下一时刻或已经蓝色)
+# 2.1 临时退场：lor信号空 || ((prediction<-4) && 波浪趋势粉色 && 波浪趋势>0)
+# 2.2 退场后返场：((prediction>=2) && 波浪趋势预判下一时刻或已经蓝色)
 
 
 # 3.开空时：可以临时退场避险或返场
 #
-# 3.1 临时退场：lor信号多 || ((prediction>0) && 波浪趋势蓝色 && 波浪趋势<0)
-# 3.2 退场后返场：((prediction<-2) && 波浪趋势预判下一时刻或已经粉色)
+# 3.1 临时退场：lor信号多 || ((prediction>4) && 波浪趋势蓝色 && 波浪趋势<0)
+# 3.2 退场后返场：((prediction<=-2) && 波浪趋势预判下一时刻或已经粉色)
 
 def align_signals(df,df_1d):
     # 获取两周期overlap部分
@@ -183,7 +183,7 @@ def wave_strategy2(df,df_1d):
     for index, row_info in enumerate(df.iterrows()):
         row=row_info[1]
         if status==0: #观望，等待多或空信号
-            #开多条件：大周期(1d)多 && ((lor信号多) || (prediction>=4) && 波浪趋势蓝色)
+            #开多条件：大周期(1d)多 && ((lor信号多) || (prediction>=6) && 波浪趋势蓝色)
             if (row['wave_1d_h']>0 and
                     (row['lor_signal']==1 or (row['prediction']>=6 and row['wave_h']>0))):
                 strategy_signal.append(1)
@@ -191,7 +191,7 @@ def wave_strategy2(df,df_1d):
                 status=1
                 status_list.append(status)
                 continue
-            #开空条件：大周期(1d)空 && ((lor信号空) || (prediction<=-4) && 波浪趋势粉色)
+            #开空条件：大周期(1d)空 && ((lor信号空) || (prediction<=-6) && 波浪趋势粉色)
             elif (row['wave_1d_h']<0 and
                     (row['lor_signal']==-1 or (row['prediction']<=-6 and row['wave_h']<0))):
                 strategy_signal.append(-1)
@@ -256,7 +256,7 @@ def wave_strategy2(df,df_1d):
         elif status==0.5: #开多临时退场，等待返场
             # 大周期没有反转
             if (row['wave_1d_h']) > 0:
-                #返场条件：((prediction>2) && 波浪趋势预判下一时刻或已经蓝色)
+                #返场条件：((prediction>=2) && 波浪趋势预判下一时刻或已经蓝色)
                 if row['lor_signal']==1 or \
                     (row['prediction']>=2 and row['wave_h']>0):
                     strategy_signal.append(1)
@@ -268,7 +268,7 @@ def wave_strategy2(df,df_1d):
                 else:
                     strategy_signal.append(0)
                     oper_signal.append(0)
-                    status = 0
+                    status = 0.5
                     status_list.append(status)
                     continue
             # 大周期反转
@@ -290,7 +290,7 @@ def wave_strategy2(df,df_1d):
         elif status == -0.5:  # 开多临时退场，等待返场
             # 大周期没有反转
             if (row['wave_1d_h']) < 0:
-                # 返场条件：((prediction<-2) && 波浪趋势预判下一时刻或已经粉色)
+                # 返场条件：((prediction<=-2) && 波浪趋势预判下一时刻或已经粉色)
                 if row['lor_signal'] == -1 or \
                         (row['prediction'] <= -2 and row['wave_h'] < 0):
                     strategy_signal.append(-1)
@@ -302,7 +302,7 @@ def wave_strategy2(df,df_1d):
                 else:
                     strategy_signal.append(0)
                     oper_signal.append(0)
-                    status = 0
+                    status = -0.5
                     status_list.append(status)
                     continue
             # 大周期反转
@@ -364,7 +364,7 @@ def calculate_profit(df,balance=10000.0,transaction_fee=0.00045):
     return df
 
 if __name__ == '__main__':
-    symbol='LTCUSDT'
+    symbol='SHIBUSDT'
     interval='4h'
     num_candles=5000
     df = pd.read_csv(f"C:\\Trade\\data\\{symbol}_{interval}_spot.csv")

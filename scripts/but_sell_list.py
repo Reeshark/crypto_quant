@@ -50,3 +50,6 @@ for trading_id in sell_list:
     trading_list.remove(symbol)
 print('Trading List:')
 print(trading_list)
+
+
+

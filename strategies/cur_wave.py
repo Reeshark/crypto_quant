@@ -83,6 +83,30 @@ def get_symbol(print_str):
     position=print_str.find("USDT")
     return print_str[7:position+4] #返回对应symbol
 
+def find_newest_file(directory):
+    # 确保提供的路径存在且是一个目录
+    if not os.path.isdir(directory):
+        print("提供的路径不是一个有效的目录")
+        return None
+
+    # 初始化最新时间和最新文件路径
+    newest_time = 0
+    newest_file = None
+
+    # 遍历目录中的所有文件和文件夹
+    for item in os.listdir(directory):
+        full_path = os.path.join(directory, item)
+        # 确保是一个文件而不是文件夹
+        if os.path.isfile(full_path):
+            # 获取文件的修改时间
+            file_time = os.path.getmtime(full_path)
+            # 检查这个文件的时间是否是最新的
+            if file_time > newest_time:
+                newest_time = file_time
+                newest_file = full_path
+
+    return newest_file
+
 def get_signals(symbol,interval,max_candles):
     global print_list
     print(symbol)
@@ -124,7 +148,8 @@ if __name__ == '__main__':
     symbols=coin_whole_list
     # trading_list 主要用于过滤显示的信号，没有在list里的做多做空信号会显示出来，在list里的平仓信号会显示出来，其余不显示
     record_path='C:\\trade\\results\\trading_record\\'
-    record_file=record_path+"2024-09-16 13_28_22.json"
+    #record_file=record_path+"2024-09-16 13_38_08.json"
+    record_file=find_newest_file(record_path)
     with open(record_file, 'r') as file:
         trading_list = json.load(file)
     interval="4h"
@@ -144,7 +169,7 @@ if __name__ == '__main__':
         print(failed_list)
         failed_list2 = []
         for symbol in failed_list:
-            try:  # 如果网络失败就计入failed_list里 后面再重新跑一次
+            try:  # 如果网络失败就计入failed_list里 后面再重新跑
                 get_signals(symbol,interval,max_candles)
             except:
                 print("Running %s Failed!" % symbol)
@@ -153,17 +178,18 @@ if __name__ == '__main__':
         tries+=1
         if tries>20: #超过20次尝试如果还没跑出来就不要了
             break
+    # 打印结果
     trading_dict={'buy':{},'sell':{}}
     for idx,print_str in enumerate(print_list):
         if "long" in print_str:
             print(f"%d. {bcolors.OKGREEN}%s{bcolors.ENDC}" % (idx+1, print_str)) # print with green
-            trading_dict['buy'][idx]=get_symbol(print_str)
+            trading_dict['buy'][idx+1]=get_symbol(print_str)
         elif "short" in print_str:
             print(f"%d. {bcolors.FAIL}%s{bcolors.ENDC}" % (idx + 1, print_str)) # print with red
-            trading_dict['buy'][idx] = get_symbol(print_str)
+            trading_dict['buy'][idx+1] = get_symbol(print_str)
         else:
             print(f"%d. {bcolors.OKBLUE}%s{bcolors.ENDC}" % (idx + 1, print_str))  # print with blue
-            trading_dict['sell'][idx] = get_symbol(print_str)
+            trading_dict['sell'][idx+1] = get_symbol(print_str)
     buy_list_str = input("Input Buy List:")
     if buy_list_str == "":
         buy_list=[]
