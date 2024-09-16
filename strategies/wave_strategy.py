@@ -178,7 +178,8 @@ def wave_strategy2(df,df_1d):
     df=align_signals(df,df_1d)
     status=0
     status_list=[]
-    strategy_signal=[]
+    strategy_signal=[] # 观望：0 做多：1 做空：-1
+    oper_signal=[] # 新出做多信号：1 新出做空信号：-1 新出平仓信号(包含多空):10 其余：0
     for index, row_info in enumerate(df.iterrows()):
         row=row_info[1]
         if status==0: #观望，等待多或空信号
@@ -186,6 +187,7 @@ def wave_strategy2(df,df_1d):
             if (row['wave_1d_h']>0 and
                     (row['lor_signal']==1 or (row['prediction']>=6 and row['wave_h']>0))):
                 strategy_signal.append(1)
+                oper_signal.append(1)
                 status=1
                 status_list.append(status)
                 continue
@@ -193,6 +195,7 @@ def wave_strategy2(df,df_1d):
             elif (row['wave_1d_h']<0 and
                     (row['lor_signal']==-1 or (row['prediction']<=-6 and row['wave_h']<0))):
                 strategy_signal.append(-1)
+                oper_signal.append(-1)
                 status=-1
                 status_list.append(status)
                 continue
@@ -203,6 +206,7 @@ def wave_strategy2(df,df_1d):
                 if row['lor_signal']==-1 or \
                     (row['prediction'] < -4 and row['wave_h'] < 0 and row['wave_o'] > 0):
                     strategy_signal.append(0)
+                    oper_signal.append(10)
                     status = 0.5
                     status_list.append(status)
                     continue
@@ -211,12 +215,14 @@ def wave_strategy2(df,df_1d):
                 #结束交易：出现开空条件时,由多转空
                 if row['lor_signal']==-1 or (row['prediction']<=-6 and row['wave_h']<0):
                     strategy_signal.append(-1)
+                    oper_signal.append(-1)
                     status=-1
                     status_list.append(status)
                     continue
                 #退场观望，没出现信号时，退场观望等待后续信号
                 else:
                     strategy_signal.append(0)
+                    oper_signal.append(10)
                     status=0
                     status_list.append(status)
                     continue
@@ -227,6 +233,7 @@ def wave_strategy2(df,df_1d):
                 if row['lor_signal'] == 1 or \
                         (row['prediction'] > 4 and row['wave_h'] > 0 and row['wave_o'] < 0):
                     strategy_signal.append(0)
+                    oper_signal.append(10)
                     status = -0.5
                     status_list.append(status)
                     continue
@@ -235,12 +242,14 @@ def wave_strategy2(df,df_1d):
                 # 结束交易：出现开多条件时,由空转多
                 if row['lor_signal'] == 1 or (row['prediction'] >= 6 and row['wave_h'] > 0):
                     strategy_signal.append(1)
+                    oper_signal.append(1)
                     status = 1
                     status_list.append(status)
                     continue
                 # 退场观望，没出现信号时，退场观望等待后续信号
                 else:
                     strategy_signal.append(0)
+                    oper_signal.append(10)
                     status = 0
                     status_list.append(status)
                     continue
@@ -251,12 +260,14 @@ def wave_strategy2(df,df_1d):
                 if row['lor_signal']==1 or \
                     (row['prediction']>=2 and row['wave_h']>0):
                     strategy_signal.append(1)
+                    oper_signal.append(1)
                     status=1
                     status_list.append(status)
                     continue
                 # 继续观望，没出现信号时，退场观望等待后续信号
                 else:
                     strategy_signal.append(0)
+                    oper_signal.append(0)
                     status = 0
                     status_list.append(status)
                     continue
@@ -265,12 +276,14 @@ def wave_strategy2(df,df_1d):
                 # 结束交易：出现开空条件时,由多转空
                 if row['lor_signal'] == -1 or (row['prediction'] <= -6 and row['wave_h'] < 0):
                     strategy_signal.append(-1)
+                    oper_signal.append(-1)
                     status = -1
                     status_list.append(status)
                     continue
                 # 继续观望，没出现信号时，退场观望等待后续信号
                 else:
                     strategy_signal.append(0)
+                    oper_signal.append(0)
                     status = 0
                     status_list.append(status)
                     continue
@@ -281,12 +294,14 @@ def wave_strategy2(df,df_1d):
                 if row['lor_signal'] == -1 or \
                         (row['prediction'] <= -2 and row['wave_h'] < 0):
                     strategy_signal.append(-1)
+                    oper_signal.append(-1)
                     status = -1
                     status_list.append(status)
                     continue
                 # 继续观望，没出现信号时，退场观望等待后续信号
                 else:
                     strategy_signal.append(0)
+                    oper_signal.append(0)
                     status = 0
                     status_list.append(status)
                     continue
@@ -295,12 +310,14 @@ def wave_strategy2(df,df_1d):
                 # 结束交易：出现开多条件时,由空转多
                 if row['lor_signal'] == 1 or (row['prediction'] >= 6 and row['wave_h'] > 0):
                     strategy_signal.append(1)
+                    oper_signal.append(1)
                     status = 1
                     status_list.append(status)
                     continue
                 # 继续观望，没出现信号时，退场观望等待后续信号
                 else:
                     strategy_signal.append(0)
+                    oper_signal.append(0)
                     status = 0
                     status_list.append(status)
                     continue
@@ -309,8 +326,10 @@ def wave_strategy2(df,df_1d):
             strategy_signal.append(strategy_signal[-1])
         else:
             strategy_signal.append(0)
+        oper_signal.append(0)
         status_list.append(status)
     df['strategy_signal'] = strategy_signal
+    df['oper_signal'] = oper_signal
     df['status']=status_list
     return df
 
@@ -345,7 +364,7 @@ def calculate_profit(df,balance=10000.0,transaction_fee=0.00045):
     return df
 
 if __name__ == '__main__':
-    symbol='ILVUSDT'
+    symbol='LTCUSDT'
     interval='4h'
     num_candles=5000
     df = pd.read_csv(f"C:\\Trade\\data\\{symbol}_{interval}_spot.csv")
