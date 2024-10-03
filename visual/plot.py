@@ -269,7 +269,7 @@ def plot_strategy_RAL(df,symbol,internal,mode='A', ADX_thr=20,RSI_thr=[30,70],du
         plt.show()
     return
 
-def plot_lorentzian_stat(stat_info):
+def plot_lorentzian_stat(stat_info,dump_file=''):
     # Fixing random state for reproducibility
 
     x = np.random.rand(len(stat_info))
@@ -289,14 +289,14 @@ def plot_lorentzian_stat(stat_info):
     fig, axs = plt.subplots(2, 3,figsize=(18, 12))
 
     # Matplotlib marker symbol
-    axs[0, 0].scatter(stat_info['macd'], y, s=20, c=colors)
-    axs[0, 0].set_title("macd")
+    axs[0, 0].scatter(stat_info['wave_1d_h'], y, s=20, c=colors)
+    axs[0, 0].set_title("wave_1d_h")
 
-    axs[0, 1].scatter(stat_info['wt'], y, s=20, c=colors)
-    axs[0, 1].set_title("wt")
+    axs[0, 1].scatter(stat_info['wave_o'], y, s=20, c=colors)
+    axs[0, 1].set_title("wave_o")
 
-    axs[0, 2].scatter(stat_info['adx'], y, s=20, c=colors)
-    axs[0, 2].set_title("adx")
+    axs[0, 2].scatter(stat_info['wave_h'], y, s=20, c=colors)
+    axs[0, 2].set_title("wave_h")
 
     axs[1, 0].scatter(stat_info['rsi'], y, s=20, c=colors)
     axs[1, 0].set_title("rsi")
@@ -305,10 +305,15 @@ def plot_lorentzian_stat(stat_info):
     axs[1, 1].set_title("lor_score")
 
     # regular 5-pointed asterisk marker
-    axs[1, 2].scatter(stat_info['wt'], stat_info['rsi'], s=20, c=colors)
-    axs[1, 2].set_title("wt-rsi")
+    axs[1, 2].scatter(stat_info['wave_1d_h'], stat_info['rsi'], s=20, c=colors)
+    axs[1, 2].set_title("wave_1d_h-rsi")
 
-    plt.show()
+    plt.tight_layout()
+    if not dump_file=='' and 'pdf' in dump_file:
+        plt.savefig(dump_file, format='pdf', dpi=400)
+    else:
+        plt.show()
+    return
 
 
 
@@ -639,7 +644,7 @@ def plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=''):
     return
 
 def plot_wave(df,symbol,interval,dump_file=''):
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(36, 18))
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(108, 18))
 
     # 上部子图：绘制收盘价曲线
     ax1.set_title('%s---%s %s-%s Close Price'%(symbol,interval,str(df['open_time'].tolist()[0]),str(df['close_time'].tolist()[-1])))

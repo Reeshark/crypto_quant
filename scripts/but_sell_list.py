@@ -20,7 +20,7 @@ trading_list = ['DYDXUSDT', 'SOLUSDT', 'BCHUSDT', 'UNIUSDT', 'ETCUSDT', 'AAVEUSD
                 'BOMEUSDT', 'ARBUSDT', '1000SHIBUSDT', 'MKRUSDT', '1000XECUSDT', 'WAXPUSDT', 'WIFUSDT', 'ETHUSDT',
                 'AVAXUSDT']
 print_list=["Symbol:DOGEUSDT, now:2024-09-16 12:29:13 last_short:2024-09-16 11:59:59",
-            "Symbol:BTCUSDT, now:2024-09-16 12:29:13 last_long:2024-09-16 11:59:59",
+            "Symbol:LTCUSDT, now:2024-09-16 12:29:13 last_long:2024-09-16 11:59:59",
             "Symbol:XRPUSDT, now:2024-09-16 12:29:13 last_short:2024-09-16 11:59:59",
             "Symbol:ILVUSDT, now:2024-09-16 12:29:13 last_stop:2024-09-16 11:59:59",
             "Symbol:SANDUSDT, now:2024-09-16 12:29:13 last_stop:2024-09-16 11:59:59",]

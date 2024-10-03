@@ -112,12 +112,15 @@ def get_signals(symbol,interval,max_candles):
     print(symbol)
     now = int(datetime.now(timezone.utc).timestamp() * 1000)
     df = get_cur_price(symbol, '4h', now, max_candles)
-    df_1d=get_cur_price(symbol, '1d', now, max_candles)
-    df = wave_strategy2(df,df_1d)
+    #df_1d=get_cur_price(symbol, '1d', now, max_candles)
+    df = wave_strategy3(df)
     # 寻找最后一个信号的索引
     last_short_index = list(np.where(df['oper_signal'].to_numpy() == -1))[0][-1]
     last_long_index = list(np.where(df['oper_signal'].to_numpy() == 1))[0][-1]
-    last_stop_index = list(np.where(df['oper_signal'].to_numpy() == 10))[0][-1]
+    if not len(list(np.where(df['oper_signal'].to_numpy() == 10))[0])==0:
+        last_stop_index = list(np.where(df['oper_signal'].to_numpy() == 10))[0][-1]
+    else:
+        last_stop_index = 0
     cur_ts = pd.to_datetime(now, origin="1970-01-01 08:00:00", unit='ms')
     last_signal_idx=max(last_long_index, last_short_index,last_stop_index)
     last_signal_ts=df['close_time'].values[last_signal_idx]
@@ -155,6 +158,7 @@ if __name__ == '__main__':
     interval="4h"
     max_candles=1000
     failed_list=[]
+    #symbols=['SOLUSDT']
     for symbol in symbols:
         try: #如果网络失败就计入failed_list里 后面再重新跑一次
             get_signals(symbol,interval,max_candles)
@@ -191,15 +195,15 @@ if __name__ == '__main__':
             print(f"%d. {bcolors.OKBLUE}%s{bcolors.ENDC}" % (idx + 1, print_str))  # print with blue
             trading_dict['sell'][idx+1] = get_symbol(print_str)
     buy_list_str = input("Input Buy List:")
-    if buy_list_str == "":
+    if buy_list_str == '':
         buy_list=[]
     else:
-        buy_list = [int(num) for num in buy_list_str.split(' ')]
+        buy_list = [int(num) for num in buy_list_str.split(',')]
     sell_list_str = input("Input Sell List:")
-    if sell_list_str=="":
+    if sell_list_str=='':
         sell_list=[]
     else:
-        sell_list = [int(num) for num in sell_list_str.split(' ')]
+        sell_list = [int(num) for num in sell_list_str.split(',')]
     # 添加买入的单，删除卖出的单
     for trading_id in buy_list:
         symbol = trading_dict['buy'][trading_id]

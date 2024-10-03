@@ -184,7 +184,7 @@ def src(df, src_type):
         x = (df['high_price'] + df['low_price'] + df['close_price'] * 2) / 4
     return x
 
-def calculate_wave(df, src_type, clen, alen, slen):
+def calculate_wave(df, src_type, clen=10, alen=21, slen=4):
     x = src(df, src_type)
     m = ema_indicator(x, window=clen)
     d = pd.Series(x).rolling(window=clen).std()
@@ -193,22 +193,33 @@ def calculate_wave(df, src_type, clen, alen, slen):
     df['wave_o'],df['wave_s'],df['wave_h']=o,s,o-s
     return df
 
+def calculate_wave_1d(df, src_type, clen=60, alen=126, slen=24):
+    x = src(df, src_type)
+    m = ema_indicator(x, window=clen)
+    d = pd.Series(x).rolling(window=clen).std()
+    o = ema_indicator((x - m) / d * 100, window=alen)
+    s = sma_indicator(o, window=slen)
+    df['wave_1d_o'],df['wave_1d_s'],df['wave_1d_h']=o,s,o-s
+    return df
+
 if __name__ == '__main__':
     symbols=['BTCUSDT']
     #internals=['1d','15m','1h','4h']
     internals=['1h']
-    num_candles=6000
+    num_candles=1000
     for symbol in symbols:
-        for internal in internals:
-            print('Backtesting:%s_%s_%s'%(symbol,internal,num_candles))
-            df = pd.read_csv(f"D:\\Trade\\informer-Amazon\\utils\\Binacne_Data\\{symbol}\\{symbol}_{internal}_spot.csv")
+        for interval in internals:
+            print('Backtesting:%s_%s_%s'%(symbol,interval,num_candles))
+            df = pd.read_csv(f"C:\\Trade\\data\\{symbol}_{interval}_spot.csv")
             df = df[-num_candles:]
             df = calculate_ADX(df)
             df = calculate_rsi(df)
+            df = calculate_lorentzian(df)
+            df = calculate_wave(df, src_type='hlc3', clen=10, alen=21, slen=4)
             df['open_time']=pd.to_datetime(df['open_time'], unit='ms')
             df['close_time'] = pd.to_datetime(df['close_time'], unit='ms')
             #plot_price_and_adx(df)
-            plot_price_with_adx(df,symbol,internal,ADX_thr=40,RSI_thr=[35,65])
+            plot_price_with_adx(df,symbol,interval,ADX_thr=40,RSI_thr=[35,65])
             print('testing')
 
 

@@ -45,8 +45,10 @@ def generate_spot_trading_data(symbol= "BTCUSDT", interval= "1h"):
     columns = ["open_time", "open_price", "high_price", "low_price", "close_price",
            "volume", "close_time", "turnover", "tickcount", "active_buying_volume",
            "active_buying_turnover", "Unknown"]
-    if(os.path.exists(os.path.join(f"D:/Trade/data/{symbol}_{interval}_spot.csv"))):
-        df = pd.read_csv(os.path.join(f"D:/Trade/data/{symbol}_{interval}_spot.csv"))
+    if(os.path.exists(os.path.join(f"C:/Trade/data/{symbol}_{interval}_spot.csv"))):
+        #df = pd.read_csv(os.path.join(f"C:/Trade/data/{symbol}_{interval}_spot.csv"))
+        os.remove(os.path.join(f"C:/Trade/data/{symbol}_{interval}_spot.csv"))
+        df = pd.DataFrame(columns=columns)
     else:
         df = pd.DataFrame(columns=columns)
     def get_klines(df=None):
@@ -69,8 +71,8 @@ def generate_spot_trading_data(symbol= "BTCUSDT", interval= "1h"):
                 # if len(df)>0:
                     # if(end_time < df["open_time"].values[-1]):
                     #     break
-                #if(end_time<1609430400000): # 2021-01-01
-                if(end_time<1710975546000): #2024-03-21
+                if(end_time<1609430400000): # 2021-01-01
+                #if(end_time<1710975546000): #2024-03-21
                     break
                 # Save the response
                 klines = data + klines
@@ -94,7 +96,7 @@ def generate_spot_trading_data(symbol= "BTCUSDT", interval= "1h"):
     if(len(df)==0):
         df = pd.DataFrame(klines, columns=columns)
         df = df.drop_duplicates(keep='first')
-        df.to_csv(os.path.join(f"D:/Trade/data/{symbol}_{interval}_spot.csv"), index=False)
+        df.to_csv(os.path.join(f"C:/Trade/data/{symbol}_{interval}_spot.csv"), index=False)
     else:
         df_new = pd.DataFrame(klines, columns=columns)
         df_end_time = df['open_time'].values[-1]
@@ -105,7 +107,7 @@ def generate_spot_trading_data(symbol= "BTCUSDT", interval= "1h"):
                 drop_list.append(idx)
         df_new = df_new.drop(drop_list)
         df_concat = pd.concat([df, df_new])
-        df_concat.to_csv(os.path.join(f"D:/Trade/data/{symbol}_{interval}_spot.csv"), index=False)
+        df_concat.to_csv(os.path.join(f"C:/Trade/data/{symbol}_{interval}_spot.csv"), index=False)
 
 # generate_spot_trading_data()
 
@@ -507,24 +509,22 @@ if __name__ == "__main__":
             "ICPUSDT"]
     symbols = ['BTCUSDT','1000SHIBUSDT','RVNUSDT']
     #symbols = ['ETHUSDT']
-    #pool = multiprocessing.Pool(processes=5)
+    from strategies.coin_list import coin_whole_list
+    symbols = coin_whole_list
+    pool = multiprocessing.Pool(processes=5)
     print(symbols)
     # generate_fundingRate_data(symbol = symbols[0])
     start_index = 0
     for idx in range(start_index, len(symbols)):
         symbol = symbols[idx]
-        for internal in ['15m']:
+        for internal in ['4h']:
         # try:
         #     pool.apply_async(generate_spot_trading_data, args=(symbol, "1w"))
         #     # generate_spot_trading_data(symbol= symbol, interval= "1h")
         # except:
         #     print(f"error {symbol} spot")
-            try:
-                #pool.apply_async(generate_contract_trading_data, args=(symbol, internal))
-                generate_contract_trading_data(symbol, internal)
-                #generate_spot_trading_data(symbol= symbol, interval= internal)
-            except:
-                print(f"error {symbol} spot")
+                #pool.apply_async(generate_spot_trading_data, args=(symbol, internal))
+            generate_spot_trading_data(symbol, internal)
             # try:
             #     pool.apply_async(generate_spot_trading_data, args=(symbol, internal))
             #     # generate_spot_trading_data(symbol= symbol, interval= "1h")
