@@ -113,7 +113,7 @@ def get_signals(symbol,interval,max_candles):
     now = int(datetime.now(timezone.utc).timestamp() * 1000)
     df = get_cur_price(symbol, '4h', now, max_candles)
     #df_1d=get_cur_price(symbol, '1d', now, max_candles)
-    df = wave_strategy3(df)
+    df = wave_strategy_lor(df)
     # 寻找最后一个信号的索引
     last_short_index = list(np.where(df['oper_signal'].to_numpy() == -1))[0][-1]
     last_long_index = list(np.where(df['oper_signal'].to_numpy() == 1))[0][-1]
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     print_list=[]
     symbols=coin_whole_list
     # trading_list 主要用于过滤显示的信号，没有在list里的做多做空信号会显示出来，在list里的平仓信号会显示出来，其余不显示
-    record_path='C:\\trade\\results\\trading_record\\'
+    record_path='D:\\trade\\results\\trading_record\\'
     #record_file=record_path+"2024-09-16 13_38_08.json"
     record_file=find_newest_file(record_path)
     with open(record_file, 'r') as file:
