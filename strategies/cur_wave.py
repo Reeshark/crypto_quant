@@ -9,6 +9,7 @@ import datetime
 from datetime import datetime, timezone, timedelta
 import requests
 from wave_strategy import *
+from wave_trend import *
 import json
 
 # status：
@@ -113,7 +114,8 @@ def get_signals(symbol,interval,max_candles):
     now = int(datetime.now(timezone.utc).timestamp() * 1000)
     df = get_cur_price(symbol, '4h', now, max_candles)
     #df_1d=get_cur_price(symbol, '1d', now, max_candles)
-    df = wave_strategy_lor(df)
+    #df = wave_strategy_lor(df)
+    df = wave_trend(df)
     # 寻找最后一个信号的索引
     last_short_index = list(np.where(df['oper_signal'].to_numpy() == -1))[0][-1]
     last_long_index = list(np.where(df['oper_signal'].to_numpy() == 1))[0][-1]
@@ -125,7 +127,7 @@ def get_signals(symbol,interval,max_candles):
     last_signal_idx=max(last_long_index, last_short_index,last_stop_index)
     last_signal_ts=df['close_time'].values[last_signal_idx]
     if (cur_ts - last_signal_ts) < timedelta(
-            hours=12):  # 判断最后一次信号是否距离现在在12h之内
+            hours=8):  # 判断最后一次信号是否距离现在在12h之内
         if last_short_index==last_signal_idx:
             if not symbol in trading_list:
                 print_str = ("Symbol:%s, now:%s last_short:%s" %
@@ -150,7 +152,7 @@ if __name__ == '__main__':
     print_list=[]
     symbols=coin_whole_list
     # trading_list 主要用于过滤显示的信号，没有在list里的做多做空信号会显示出来，在list里的平仓信号会显示出来，其余不显示
-    record_path='D:\\trade\\results\\trading_record\\'
+    record_path='C:\\trade\\results\\trading_record\\'
     #record_file=record_path+"2024-09-16 13_38_08.json"
     record_file=find_newest_file(record_path)
     with open(record_file, 'r') as file:
@@ -158,8 +160,9 @@ if __name__ == '__main__':
     interval="4h"
     max_candles=1000
     failed_list=[]
-    #symbols=['SOLUSDT']
+    #symbols=['HBARUSDT','ICPUSDT']
     for symbol in symbols:
+        #get_signals(symbol, interval, max_candles)
         try: #如果网络失败就计入failed_list里 后面再重新跑一次
             get_signals(symbol,interval,max_candles)
         except:

@@ -721,3 +721,79 @@ def plot_wave(df,symbol,interval,dump_file=''):
     else:
         plt.show()
     return
+
+def plot_trend(df,symbol,interval,dump_file=''):
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(108, 18))
+
+    # 上部子图：绘制收盘价曲线
+    ax1.set_title('%s---%s %s-%s Close Price'%(symbol,interval,str(df['open_time'].tolist()[0]),str(df['close_time'].tolist()[-1])))
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Price')
+    ax2.set_title('Wave Factor')
+    ax2.set_xlabel('Time')
+    ax2.set_ylabel('Wave Value')
+
+    # 初始化颜色数组
+    colors = ['' for _ in df.index]
+    wave_colors=['' for _ in df.index]
+    wave_h_colors = ['' for _ in df.index]
+    status=0
+    # 根据o和s的大小关系设置颜色
+    for i in range(len(df)):
+        if df['wave_o'].iloc[i] > df['wave_s'].iloc[i]: # o>s ?
+            wave_colors[i]='green'
+        else:
+            wave_colors[i]='red'
+        if df['strategy_signal'].iloc[i]==1:
+            colors[i] = 'green'
+        elif df['strategy_signal'].iloc[i]==-1:
+            colors[i] = 'red'
+        else:
+            colors[i]='blue'
+        if i==0:
+            wave_h_colors[i] = 'blue'
+        elif df['wave_h'].iloc[i] > 0:
+            wave_h_colors[i]='green'
+        elif df['wave_h'].iloc[i] < -0:
+            wave_h_colors[i]='red'
+        else:
+            wave_h_colors[i]=wave_h_colors[i-1]
+    df['colors']=colors
+
+    # 绘制收盘价曲线，根据颜色数组绘制
+    for i in range(40, len(colors)):
+        ax1.plot(df.index[i:i+2], df['close_price'].iloc[i:i+2], color=colors[i])
+        ax2.plot(df.index[i:i + 2], df['wave_o'].iloc[i:i + 2], color=wave_colors[i])
+        ax2.plot(df.index[i:i + 2], df['wave_s'].iloc[i:i + 2], color=wave_colors[i])
+        ax2.plot(df.index[i:i + 2], df['wave_h'].iloc[i:i + 2], color=wave_h_colors[i])
+
+    ax2.axhline(y=10, linestyle=':', color='green')
+    ax2.axhline(y=5, linestyle=':', color='green')
+    ax2.axhline(y=0, linestyle=':', color='blue')
+    ax2.axhline(y=-5, linestyle=':', color='red')
+    ax2.axhline(y=-10, linestyle=':', color='red')
+    balance=df['balance']
+    min_balance = min(balance)
+    # 计算年化收益
+    time_diff=pd.to_timedelta(df['close_time'].values[-1] - df['open_time'].values[0], unit='s')
+    profit=(balance.iloc[-1]-balance.iloc[0])/balance.iloc[0]
+    annual_profit=profit/time_diff.total_seconds()*(86400*365)*100
+    ax3.set_title('Final Balance:%.3f, Min Balance:%.3f, Annual_profit:%.3f%%'%(balance.iloc[-1],min_balance,annual_profit))
+    ax3.set_xlabel('Time')
+    ax3.set_ylabel('Balance')
+    ax3.plot(range(len(balance[40:])), balance[40:], color='black')
+    # 设置网格线
+    ax1.grid(True)
+    ax2.grid(True)
+    ax3.grid(True)
+
+    # xs_long, ys_long, xs_short, ys_short=get_lorentzian_points(df)
+    # ax1.plot(xs_long,ys_long,'o',color='green')
+    # ax1.plot(xs_short, ys_short, 'o', color='red')
+    # 显示图表
+    plt.tight_layout()
+    if not dump_file=='' and 'pdf' in dump_file:
+        plt.savefig(dump_file, format='pdf', dpi=400)
+    else:
+        plt.show()
+    return

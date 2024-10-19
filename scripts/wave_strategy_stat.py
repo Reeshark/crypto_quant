@@ -4,7 +4,7 @@ from get_factors import *
 from visual.plot import plot_wave
 import os
 from strategies.coin_list import *
-from strategies.wave_strategy import wave_strategy5
+from strategies.wave_strategy import *
 
 # status：
 # 1：正在开多
@@ -564,17 +564,6 @@ def calcualte_max_drawdown(df):
     return max_drawdown_percentage*100
 
 if __name__ == '__main__':
-    values=[[60, 30, 25, 6, 0, 0],[60, 30, 25, 6, -2, 0],[60, 30, 25, 6, -2, 2],
-            [60, 30, 25, 4, 0, 0],[60, 30, 25, 4, -2, 0],[60, 30, 25, 4, -2, 2],
-            [60, 30, 25, 6, 9, 0],
-            [60, 30, 25, 6, 9, 4],
-            [60, 30, 25, 4, 9, 4],
-             [60, 30, 25, 6, 9, 0],
-             [80, 30, 25, 4, 9, 0],
-            [80, 30, 25, 4, 9, 2],
-            [100, 30, 25, 4, 6, 0],
-            [100, 30, 25, 4, 6, 2],
-            [100, 30, 25, 4, 9, 0]]
     values=[]
     for sell in [-10,-2,-4,-6,0]:
         for return_v in [0,2,4,5,6,8,10]:
@@ -595,7 +584,7 @@ if __name__ == '__main__':
         for symbol in symbols:
             if '1000' in symbol:
                 symbol= symbol.replace('1000','')
-            interval='4h'
+            interval='1h'
             num_candles=20000
             if not os.path.exists(f"C:\\Trade\\data\\{symbol}_{interval}_spot.csv"):
                 continue
@@ -603,7 +592,8 @@ if __name__ == '__main__':
             df=df[-num_candles:]
             df['open_time'] = pd.to_datetime(df['open_time'], origin="1970-01-01 08:00:00", unit='ms')
             df['close_time'] = pd.to_datetime(df['close_time'], origin="1970-01-01 08:00:00", unit='ms')
-            df=wave_strategy3(df,cfg)
+            #df=wave_strategy3(df,cfg)
+            df=wave_strategy_lor(df)
             df=calculate_profit(df,transaction_fee=0.00045)
 
             balance = df['balance']
