@@ -218,12 +218,12 @@ def calculate_profit(df,balance=10000.0,transaction_fee=0.00045):
     return df
 
 if __name__ == '__main__':
-    symbols = ['RVNUSDT','SHIBUSDT']
-    internal='15m'
+    symbols = ['BTCUSDT','DOGEUSDT']
+    internal='4h'
     balance_ratio=[0.5,0.5]
     init_balance=10000
-    num_candles=10000
-    transaction_fee=0.00045
+    num_candles=1000
+    transaction_fee=0.0002
     df1 = pd.read_csv(f"C:\\Trade\\data\\{symbols[0]}_{internal}_spot.csv")
     df2 = pd.read_csv(f"C:\\Trade\\data\\{symbols[1]}_{internal}_spot.csv")
     df_base=pd.read_csv(f"C:\\Trade\\data\\{'BTCUSDT'}_{internal}_spot.csv")
@@ -234,6 +234,6 @@ if __name__ == '__main__':
     df1=calculate_profit(df1,balance=init_balance*balance_ratio[0],transaction_fee=transaction_fee)
     df2 = calculate_profit(df2, balance=init_balance * balance_ratio[1],transaction_fee=transaction_fee)
     file_name = '%s--%s_%s_%d.pdf' % (symbols[0], symbols[1], internal,num_candles)
-    dump_file='C:\\Trade\\results\\pair_trading\\24.9.9\\'
+    dump_file='C:\\Trade\\results\\pair_trading\\24.10.11\\'
     os.makedirs(dump_file,exist_ok=True)
     plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=dump_file+'%s'%file_name)
