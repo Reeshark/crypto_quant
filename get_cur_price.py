@@ -37,7 +37,7 @@ def get_topN_trading_coin(N):
         base, quote = symbol[:-len('USDT')], 'USDT'
         if symbol.endswith("USDT") and base not in stablecoins:
             filtered_pairs.append(pair["symbol"])
-            filtered_pairs.append(symbol[:-len('USDT')]+'BTC')
+            # filtered_pairs.append(symbol[:-len('USDT')]+'BTC')
     return filtered_pairs
 
 def generate_spot_trading_data(symbol= "BTCUSDT", interval= "1h"):
@@ -116,8 +116,11 @@ def generate_contract_trading_data(symbol= "BTCUSDT", interval= "1h"):
     columns = ["open_time", "open_price", "high_price", "low_price", "close_price",
            "volume", "close_time", "turnover", "tickcount", "active_buying_volume",
            "active_buying_turnover", "Unknown"]
-    if(os.path.exists(os.path.join(f"D:/Trade/data/{symbol}_{interval}_contract.csv"))):
-        df = pd.read_csv(os.path.join(f"D:/Trade/data/{symbol}_{interval}_contract.csv"))
+    file_path=os.path.join(f"D:/Trade/data/{symbol}_{interval}_contract.csv")
+    if(os.path.exists(file_path)):
+        #df = pd.read_csv(os.path.join(f"D:/Trade/data/{symbol}_{interval}_contract.csv"))
+        os.remove(file_path)
+        df = pd.DataFrame(columns=columns)
     else:
         df = pd.DataFrame(columns=columns)
     def get_klines(df=None):
@@ -142,8 +145,8 @@ def generate_contract_trading_data(symbol= "BTCUSDT", interval= "1h"):
                 # if len(df)>0:
                     # if(end_time < df["open_time"].values[-1]):
                     #     break
-                if(end_time<1609430400000): # 2021-01-01
-                #if(end_time<1710975546000): #2024-03-21
+                #if(end_time<1609430400000): # 2021-01-01
+                if(end_time<1710975546000): #2024-03-21
                     break
                 # Save the response
                 klines = data + klines
@@ -167,7 +170,7 @@ def generate_contract_trading_data(symbol= "BTCUSDT", interval= "1h"):
     if(len(df)==0):
         df = pd.DataFrame(klines, columns=columns)
         df = df.drop_duplicates(keep='first')
-        df.to_csv(os.path.join(f"D:/Trade/data/{symbol}_{interval}_contract.csv"), index=False)
+        df.to_csv(file_path, index=False)
     else:
         df_new = pd.DataFrame(klines, columns=columns)
         df_end_time = df['open_time'].values[-1]
@@ -178,7 +181,7 @@ def generate_contract_trading_data(symbol= "BTCUSDT", interval= "1h"):
                 drop_list.append(idx)
         df_new = df_new.drop(drop_list)
         df_concat = pd.concat([df, df_new])
-        df_concat.to_csv(os.path.join(f"D:/Trade/data/{symbol}_{interval}_contract.csv"), index=False)
+        df_concat.to_csv(file_path, index=False)
 
 def generate_contract_trading_data2(symbol= "BTCUSDT", interval= "1h"):
     os.makedirs(f"./Binacne_Data/{symbol}", exist_ok=True)
@@ -447,84 +450,28 @@ def generate_fundingRate_data(symbol = "BTCUSDT"):
 
 if __name__ == "__main__":
     import multiprocessing
-    symbols = get_topN_trading_coin(N=100)
-    symbols=['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','ETCUSDT','BNBUSDT','USDCUSDT',
-             'TONUSDT',
-             'ADAUSDT',
-             'AVAXUSDT',
-             'TRXUSDT',
-             'SHIBUSDT',
-             'DOTUSDT',
-             'LINKUSDT',
-             'BCHUSDT',
-             'NEARUSDT',
-             'LTCUSDT',
-             'MATICUSDT',
-             'PEPEUSDT',
-             'UNIUSDT',
-             'ICPUSDT',
-             'ETCUSDT',
-             'APTUSDT',
-             'FETUSDT',
-             'XLMUSDT',
-             'XMRUSDT',
-             'WIFUSDT',
-             'FILUSDT'
+    symbols = get_topN_trading_coin(N=150)
+    print(symbols)
+    #symbols = ['IMXUSDT','1000FLOKIUSDT']
 
-             "MKR/USDT",
-            "YFIUSDT",
-            "BCHUSDT",
-            "AVAXUSDT",
-            "LTCUSDT",
-            "ORDIUSDT",
-            "BTCDOMUSDT",
-            "APTUSDT",
-            "AAVEUSDT",
-            "SSVUSDT",
-            "INJUSDT",
-            "LINKUSDT",
-            "TRBUSDT",
-            "WLDUSDT",
-            "NEARUSDT",
-            "DEFIUSDT",
-            "FILUSDT",
-            "RNDRUSDT",
-            "BSVUSDT",
-            "DOTUSDT",
-            "ARUSDT",
-            "ILVUSDT",
-            "TIAUSDT",
-            "XMRUSDT",
-            "COMPUSDT",
-            "QNTUSDT",
-            "EGLDUSDT",
-            "ATOMUSDT",
-            "ENSUSDT",
-            "RUNEUSDT",
-             "CFXUSDT",
-             "CRVUSDT",
-             "AIUSDT",
-             "IDUSDT",
-             "PORTALUSDT",
-            "ICPUSDT"]
-    symbols = ['BTCUSDT','1000SHIBUSDT','RVNUSDT']
-    #symbols = ['ETHUSDT']
-    from strategies.coin_list import coin_whole_list
-    symbols = coin_whole_list
+    from strategies.coin_list import *
+    symbols = coin_test2_list
+    symbols = ['JASMYUSDT']
     pool = multiprocessing.Pool(processes=5)
     print(symbols)
     # generate_fundingRate_data(symbol = symbols[0])
     start_index = 0
     for idx in range(start_index, len(symbols)):
         symbol = symbols[idx]
-        for internal in ['4h']:
+        for internal in ['15m']:
         # try:
         #     pool.apply_async(generate_spot_trading_data, args=(symbol, "1w"))
         #     # generate_spot_trading_data(symbol= symbol, interval= "1h")
         # except:
         #     print(f"error {symbol} spot")
                 #pool.apply_async(generate_spot_trading_data, args=(symbol, internal))
-            generate_spot_trading_data(symbol, internal)
+            #generate_spot_trading_data(symbol, internal)
+            generate_contract_trading_data(symbol, internal)
             # try:
             #     pool.apply_async(generate_spot_trading_data, args=(symbol, internal))
             #     # generate_spot_trading_data(symbol= symbol, interval= "1h")

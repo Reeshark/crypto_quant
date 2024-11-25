@@ -3,7 +3,7 @@ sys.path.append('./')
 sys.path.append('./strategies/')
 import os
 import numpy as np
-from coin_list import coin_whole_list
+from coin_list import *
 import pandas as pd
 import datetime
 from datetime import datetime, timezone, timedelta
@@ -84,6 +84,10 @@ def get_symbol(print_str):
     position=print_str.find("USDT")
     return print_str[7:position+4] #返回对应symbol
 
+def get_opening_symbol(print_str):
+    position=print_str.find("USDT")
+    return print_str[15:position+4] #返回对应symbol
+
 def find_newest_file(directory):
     # 确保提供的路径存在且是一个目录
     if not os.path.isdir(directory):
@@ -126,33 +130,49 @@ def get_signals(symbol,interval,max_candles):
     cur_ts = pd.to_datetime(now, origin="1970-01-01 08:00:00", unit='ms')
     last_signal_idx=max(last_long_index, last_short_index,last_stop_index)
     last_signal_ts=df['close_time'].values[last_signal_idx]
+    delta_1d_h=df['wave_1d_h'].values[-1]-df['wave_1d_h'].values[-1-10]
+    wave_s=df['wave_s'].values[-1]
+    wave_h = df['wave_h'].values[-1]
     if (cur_ts - last_signal_ts) < timedelta(
-            hours=8):  # 判断最后一次信号是否距离现在在12h之内
-        if last_short_index==last_signal_idx:
-            if not symbol in trading_list:
-                print_str = ("Symbol:%s, now:%s last_short:%s" %
-                             (symbol, str(cur_ts)[:19], str(df['close_time'].to_list()[last_short_index])[:19]))
+            hours=16):  # 判断最后一次信号是否距离现在在12h之内
+        if last_short_index==last_signal_idx: #开空信号
+            if not symbol in trading_list and delta_1d_h<=0:
+                print_str = ("Symbol:%s, now:%s last_short:%s delta_1d_h:%.3f wave_s:%.3f wave_h:%.3f" %
+                             (symbol, str(cur_ts)[:19], str(df['close_time'].to_list()[last_short_index])[:19],delta_1d_h,wave_s,wave_h))
                 print(f"{bcolors.FAIL}%s{bcolors.ENDC}" % print_str) # print with red
                 print_list.append(print_str)
-        elif last_long_index==last_signal_idx:
+        elif last_long_index==last_signal_idx and delta_1d_h>=0: #开多信号
             if not symbol in trading_list:
-                print_str = ("Symbol:%s, now:%s last_long:%s" %
-                             (symbol, str(cur_ts)[:19],  str(df['close_time'].to_list()[last_long_index])[:19]))
+                print_str = ("Symbol:%s, now:%s last_long:%s delta_h:%.3f wave_s:%.3f wave_h:%.3f" %
+                             (symbol, str(cur_ts)[:19],  str(df['close_time'].to_list()[last_long_index])[:19],delta_1d_h,wave_s,wave_h))
                 print(f"{bcolors.OKGREEN}%s{bcolors.ENDC}" % print_str) # print with green
                 print_list.append(print_str)
         else:
-            if symbol in trading_list:
-                print_str = ("Symbol:%s, now:%s last_stop:%s" %
-                             (symbol, str(cur_ts)[:19],  str(df['close_time'].to_list()[last_stop_index])[:19]))
+            if symbol in trading_list: #平仓信号
+                print_str = ("Symbol:%s, now:%s last_stop:%s delta_h:%.3f wave_s:%.3f wave_h:%.3f" %
+                             (symbol, str(cur_ts)[:19],  str(df['close_time'].to_list()[last_stop_index])[:19],delta_1d_h,wave_s,wave_h))
                 print(f"{bcolors.OKBLUE}%s{bcolors.ENDC}" % print_str) # print with blue
                 print_list.append(print_str)
+    if symbol in trading_list: #临时人工校验正在交易的单是否需要平仓
+        if last_short_index>last_long_index: #这单是做空
+            print_str = ("Opening Symbol:%s, now:%s last_short:%s delta_1d_h:%.3f wave_s:%.3f wave_h:%.3f" %
+                         (symbol, str(cur_ts)[:19], str(df['close_time'].to_list()[last_short_index])[:19], delta_1d_h,
+                          wave_s, wave_h))
+            print(f"{bcolors.FAIL}%s{bcolors.ENDC}" % print_str)  # print with red
+            print_list.insert(0,print_str)
+        else: #这单是做多
+            print_str = ("Opening Symbol:%s, now:%s last_long:%s delta_h:%.3f wave_s:%.3f wave_h:%.3f" %
+                         (symbol, str(cur_ts)[:19], str(df['close_time'].to_list()[last_long_index])[:19], delta_1d_h,
+                          wave_s, wave_h))
+            print(f"{bcolors.OKGREEN}%s{bcolors.ENDC}" % print_str)  # print with green
+            print_list.insert(0,print_str)
 
 if __name__ == '__main__':
     global print_list
     print_list=[]
-    symbols=coin_whole_list
+    symbols=coint_top150_whole_list
     # trading_list 主要用于过滤显示的信号，没有在list里的做多做空信号会显示出来，在list里的平仓信号会显示出来，其余不显示
-    record_path='C:\\trade\\results\\trading_record\\'
+    record_path='D:\\trade\\results\\trading_record\\'
     #record_file=record_path+"2024-09-16 13_38_08.json"
     record_file=find_newest_file(record_path)
     with open(record_file, 'r') as file:
@@ -160,7 +180,7 @@ if __name__ == '__main__':
     interval="4h"
     max_candles=1000
     failed_list=[]
-    #symbols=['HBARUSDT','ICPUSDT']
+    #symbols=['KASUSDT']
     for symbol in symbols:
         #get_signals(symbol, interval, max_candles)
         try: #如果网络失败就计入failed_list里 后面再重新跑一次
@@ -188,25 +208,35 @@ if __name__ == '__main__':
     # 打印结果
     trading_dict={'buy':{},'sell':{}}
     for idx,print_str in enumerate(print_list):
-        if "long" in print_str:
+        if "long" in print_str and not "Opening" in print_str:
             print(f"%d. {bcolors.OKGREEN}%s{bcolors.ENDC}" % (idx+1, print_str)) # print with green
             trading_dict['buy'][idx+1]=get_symbol(print_str)
-        elif "short" in print_str:
+        elif "short" in print_str and not "Opening" in print_str:
             print(f"%d. {bcolors.FAIL}%s{bcolors.ENDC}" % (idx + 1, print_str)) # print with red
             trading_dict['buy'][idx+1] = get_symbol(print_str)
         else:
-            print(f"%d. {bcolors.OKBLUE}%s{bcolors.ENDC}" % (idx + 1, print_str))  # print with blue
-            trading_dict['sell'][idx+1] = get_symbol(print_str)
-    buy_list_str = input("Input Buy List:")
-    if buy_list_str == '':
-        buy_list=[]
-    else:
-        buy_list = [int(num) for num in buy_list_str.split(',')]
+            if "long" in print_str:
+                print(f"%d. {bcolors.OKGREEN}%s{bcolors.ENDC}" % (idx + 1, print_str))  # print with green
+                trading_dict['sell'][idx + 1] = get_opening_symbol(print_str)
+            elif "short" in print_str:
+                print(f"%d. {bcolors.FAIL}%s{bcolors.ENDC}" % (idx + 1, print_str))  # print with red
+                trading_dict['sell'][idx + 1] = get_opening_symbol(print_str)
+            else:
+                print(f"%d. {bcolors.OKBLUE}%s{bcolors.ENDC}" % (idx + 1, print_str))  # print with blue
+                trading_dict['sell'][idx+1] = get_opening_symbol(print_str)
+
     sell_list_str = input("Input Sell List:")
     if sell_list_str=='':
         sell_list=[]
     else:
         sell_list = [int(num) for num in sell_list_str.split(',')]
+
+    buy_list_str = input("Input Buy List:")
+    if buy_list_str == '':
+        buy_list=[]
+    else:
+        buy_list = [int(num) for num in buy_list_str.split(',')]
+
     # 添加买入的单，删除卖出的单
     for trading_id in buy_list:
         symbol = trading_dict['buy'][trading_id]
