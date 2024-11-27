@@ -561,6 +561,13 @@ def plot_one_trade(df,symbol,internals,mode='F', ADX_thr=20,RSI_thr=[30,70],dump
 
 
 def plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=''):
+    def calculate_max_drawdown(balance):
+        cumulative_max = balance.cummax()
+        # 计算回撤
+        drawdowns = (cumulative_max - balance) / cumulative_max
+        # 找到最大回撤
+        max_drawdown = drawdowns.max()
+        return max_drawdown * 100
     def signal_color(signal):
         color='black'
         if signal==0:
@@ -576,7 +583,9 @@ def plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=''):
     sma=df_pair['sma']
     bollinger_upper=df_pair['bollinger_upper']
     bollinger_lower=df_pair['bollinger_lower']
-
+    zscore=df_pair['zscore']
+    coints=df_pair['coint']
+    adfs=df_pair['adf']
     df1_colors=['' for _ in df1.index]
     df2_colors=['' for _ in df2.index]
     for i in range(len(df1)):
@@ -610,22 +619,40 @@ def plot_pair_trading(df1,df2,df_pair,symbols,internal,dump_file=''):
     ax3.plot(bollinger_upper.index, bollinger_upper, label='Bollinger Upper', linestyle='-.')
     ax3.plot(bollinger_lower.index, bollinger_lower, label='Bollinger Lower', linestyle='-.')
 
+    # ax4.set_title('Pair %s--%s %s Trading Strategy %s--%s'%(symbols[0],symbols[1],internal,str(df1['open_time'].tolist()[0]),str(df1['close_time'].tolist()[-1])))
+    # ax4.set_xlabel('Time')
+    # ax4.set_ylabel('Spread')
+    # ax4.plot(pd.Series(spread).index, spread, label='Spread')  # 假设 spread 是 Pandas Series
+    # ax4.plot(zscore.index, zscore, label='Zscore')
+
+    ax4.set_title('Pair %s--%s %s Trading Strategy %s--%s'%(symbols[0],symbols[1],internal,str(df1['open_time'].tolist()[0]),str(df1['close_time'].tolist()[-1])))
+    ax4.set_xlabel('Time')
+    ax4.set_ylabel('Spread')
+    ax4.plot(coints.index, coints, label='Coint', color='blue')
+    ax4.plot(adfs.index, adfs, label='ADF' ,color='red')
+
     balance_1=df1['balance']
     balance_2=df2['balance']
     balance=pd.Series(balance_1.values+balance_2.values)
+    max_drawdown = calculate_max_drawdown(balance)
     min_balance=min(balance)
+    crypto1 = (df1['close_price']).to_numpy()
+    crypto2 = (df2['close_price']).to_numpy()
+    from statsmodels.tsa.stattools import coint, adfuller
+    coint_t, pvalue, crit_value = coint(crypto1, crypto2)
 
-    ax4.set_title('Partial Balance')
-    ax4.set_xlabel('Time')
-    ax4.set_ylabel('Balance')
-    ax4.plot(range(len(balance)), balance_1, color='red')
-    ax4.plot(range(len(balance)), balance_2, color='blue')
+
+    # ax5.set_title('Partial Balance')
+    # ax5.set_xlabel('Time')
+    # ax5.set_ylabel('Balance')
+    # ax5.plot(range(len(balance)), balance_1, color='red')
+    # ax5.plot(range(len(balance)), balance_2, color='blue')
 
     # 计算年化收益
     time_diff=pd.to_timedelta(df1['close_time'].values[-1] - df1['open_time'].values[0], unit='s')
     profit=(balance.iloc[-1]-balance.iloc[0])/balance.iloc[0]
     annual_profit=profit/time_diff.total_seconds()*(86400*365)*100
-    ax5.set_title('Final Balance:%.3f, Min Balance:%.3f, Annual_profit:%.3f%%'%(balance.iloc[-1],min_balance,annual_profit))
+    ax5.set_title('Coint:%.4f, Final Balance:%.3f, Max Drawdown:%.3f, Annual_profit:%.3f%%'%(pvalue,balance.iloc[-1],max_drawdown,annual_profit))
     ax5.set_xlabel('Time')
     ax5.set_ylabel('Balance')
 
